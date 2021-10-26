@@ -7,19 +7,32 @@ const corsOptions = {
 }
 
 const mongoose = require('mongoose');
+const userProfile = require('./Schemas/userProfile');
 
 
 const PORT = process.env.PORT || 3001;
 
 
 const app = express();
-app.use(express.json());
-app.use(cors(corsOptions));
 
 const dbURI = "mongodb+srv://admin:jmnZTIrVMA05hPYj@cluster0.w4wrz.mongodb.net/profile-management?retryWrites=true&w=majority";
 mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
-        .then((result) => console.log(result, "connected to dbd"))
+        .then((result) => {
+          app.listen(PORT, () => {
+            console.log(`Server listening on ${PORT}`);
+          });
+        })
         .catch((error) => console.log("HATA!:",error));
+
+app.use(express.json());
+app.use(cors(corsOptions));
+
+
+app.get('/add-blog', (req, res) => {
+  const userProfile = new userProfile({
+
+  });
+});
 
 
 app.get("/users", (req, res) => {
@@ -32,14 +45,19 @@ app.post("/login", function (req, res) {
   var password = req.body.password;
   if(userName == "fbatuhanr@gmail.com" && password == "123"){
 
+      let newUser = new userProfile({
+        email: userName
+      });
+      
+      newUser.save((err, result) => {
+        if (err) throw err;
+        console.log(result);
+      });
+
     return res.json({
       isLoginSuccess: true, 
       errorMessage: null
     });
   }
   return res.json({isLoginSuccess: false, errorMessage: 'Kullanıcı bilgilerini kontrol ediniz.'});
-});
-
-app.listen(PORT, () => {
-  console.log(`Server listening on ${PORT}`);
 });
