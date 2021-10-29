@@ -6,7 +6,7 @@ const Schema = mongoose.Schema;
 
 const userProfileSchema = new Schema({
   email:  String 
-});
+}, {timestamps: true});
 
 const userProfile = mongoose.model('userProfile', userProfileSchema);
 module.exports = userProfile;
