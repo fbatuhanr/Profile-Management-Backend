@@ -7,7 +7,7 @@ const corsOptions = {
 }
 
 const mongoose = require('mongoose');
-const userProfile = require('./Schemas/userProfile');
+const UserProfile = require('../Schemas/userProfile.js');
 
 
 const PORT = process.env.PORT || 3001;
@@ -28,10 +28,28 @@ app.use(express.json());
 app.use(cors(corsOptions));
 
 
-app.get('/add-blog', (req, res) => {
-  const userProfile = new userProfile({
-
+app.get('/add-profile', (req, res) => {
+  const userProfile = new UserProfile({
+      email: "fbatuhanr@gmail.com"
   });
+
+  userProfile.save()
+  .then(result => {
+    res.send(result);
+  })
+  .catch(err => {
+    console.log("Error: ", err);
+  })
+});
+
+app.get('/all-profiles', (req, res) => {
+    UserProfile.find()
+    .then(result => {
+      res.send(result);
+    })
+    .catch(err => {
+      console.log("Error: ", err);
+    })
 });
 
 
