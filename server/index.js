@@ -63,19 +63,72 @@ app.post("/login", function (req, res) {
   var password = req.body.password;
   if(userName == "fbatuhanr@gmail.com" && password == "123"){
 
-      let newUser = new userProfile({
-        email: userName
-      });
-      
-      newUser.save((err, result) => {
-        if (err) throw err;
-        console.log(result);
-      });
-
     return res.json({
       isLoginSuccess: true, 
       errorMessage: null
     });
   }
   return res.json({isLoginSuccess: false, errorMessage: 'Kullanıcı bilgilerini kontrol ediniz.'});
+});
+
+
+
+app.post("/sign-up", function (req, res) {
+
+  console.log(req);
+  console.log(res);
+
+  const {signupEmail, signupPassword} = req.body;
+
+  console.log(signupEmail, ' ', signupPassword);
+
+  let newUser = new UserProfile({
+    email: signupEmail,
+    password: signupPassword
+  });
+
+  newUser.save((err, result) => {
+    if (err) throw err;
+
+    console.log("user save:", result);
+    
+    return res.json({
+      isLoginSuccess: true, 
+      errorMessage: null
+    });
+  });
+  
+});
+
+
+
+app.get("/profile-form", (req, res) => {
+
+  const email = req.query.email;
+
+  UserProfile.findOne({email}, (error, doc) => {
+    if(error) console.log("findOne error: ", error);
+    else return res.send(doc);
+  })
+
+});
+app.post("/profile-form", (req,res) => {
+
+  const {email, name, surname, phoneNumber, education, country, state, hobbies} = req.body;
+
+  UserProfile.findOneAndUpdate(
+    {email}, 
+    {name, surname, phoneNumber, education, country, state, hobbies},
+    {new: true},
+    (err, result)=>{
+      if (err) console.log(err);
+      else return result;
+    }
+  )
+
+  // return res.json({
+  //   isLoginSuccess: true, 
+  //   errorMessage: null
+  // });
+  return res;
 });
