@@ -1,10 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const corsOptions = {
-  origin:'http://localhost:3000', 
-  credentials:true,            //access-control-allow-credentials:true
-  optionSuccessStatus:200
-}
+const corsOptions = { origin:'http://localhost:3000', credentials:true, optionSuccessStatus:200 }
 
 const mongoose = require('mongoose');
 const UserProfile = require('../Schemas/userProfile.js');
@@ -59,45 +55,34 @@ app.get("/users", (req, res) => {
 });
 
 app.post("/login", function (req, res) {
-  var userName = req.body.user;
-  var password = req.body.password;
-  if(userName == "fbatuhanr@gmail.com" && password == "123"){
 
-    return res.json({
-      isLoginSuccess: true, 
-      errorMessage: null
-    });
-  }
-  return res.json({isLoginSuccess: false, errorMessage: 'Kullanıcı bilgilerini kontrol ediniz.'});
+  const {email, password} = req.body;
+  UserProfile.findOne({email: email, password: password}, function(err, user){
+    if(err) console.log(err);
+    else if(user) return res.json({isLoginSuccess: true, errorMessage: null});
+    else return res.json({isLoginSuccess: false, errorMessage: 'Kullanıcı bilgilerini kontrol ediniz.'});
+  });
 });
+
+
 
 
 
 app.post("/sign-up", function (req, res) {
 
-  console.log(req);
-  console.log(res);
-
   const {signupEmail, signupPassword} = req.body;
-
-  console.log(signupEmail, ' ', signupPassword);
-
-  let newUser = new UserProfile({
-    email: signupEmail,
-    password: signupPassword
-  });
-
-  newUser.save((err, result) => {
-    if (err) throw err;
-
-    console.log("user save:", result);
-    
-    return res.json({
-      isLoginSuccess: true, 
-      errorMessage: null
-    });
-  });
   
+  UserProfile.findOne({email: signupEmail}, function(err, user){
+    if(err) console.log(err);
+    else if(user) return res.json({isLoginSuccess: false, errorMessage: "Email is exist!"});
+    else {
+      const newUser = new UserProfile({email: signupEmail, password: signupPassword});
+      newUser.save((err, result) => {
+        if (err) throw err;
+        return res.json({isLoginSuccess: true, errorMessage: null});
+      });
+    }
+  });
 });
 
 
@@ -114,21 +99,21 @@ app.get("/profile-form", (req, res) => {
 });
 app.post("/profile-form", (req,res) => {
 
-  const {email, name, surname, phoneNumber, education, country, state, hobbies} = req.body;
+  const {filterEmail, email, name, surname, phoneNumber, education, country, state, hobbies} = req.body;
 
-  UserProfile.findOneAndUpdate(
-    {email}, 
-    {name, surname, phoneNumber, education, country, state, hobbies},
-    {new: true},
-    (err, result)=>{
-      if (err) console.log(err);
-      else return result;
+  UserProfile.findOne({email: email}, function(err, user){
+    if(err) console.log(err);
+    else if(user) return res.json({isUpdateSuccess: false, errorMessage: "Email is exist!"});
+    else {
+      UserProfile.findOneAndUpdate(
+        {filterEmail}, 
+        {email, name, surname, phoneNumber, education, country, state, hobbies},
+        {new: true},
+        (err, result)=>{
+          if (err) console.log(err);
+          else return res.json({isUpdateSuccess: true, errorMessage: null});
+        }
+      )
     }
-  )
-
-  // return res.json({
-  //   isLoginSuccess: true, 
-  //   errorMessage: null
-  // });
-  return res;
+  });
 });
