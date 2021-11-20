@@ -47,7 +47,13 @@ app.get('/all-profiles', (req, res) => {
 
 app.get("/users", (req, res) => {
 
-    res.json({user: "ben user"});
+    UserProfile.find()
+    .then(result => {
+      res.send(result);
+    })
+    .catch(err => {
+      console.log("Error: ", err);
+    })
 });
 
 app.post("/login", function (req, res) {
@@ -98,16 +104,21 @@ app.post("/profile-form", (req,res) => {
   const {filterEmail, email, name, surname, phoneNumber, education, country, state, hobbies} = req.body;
 
   UserProfile.findOne({email: email}, function(err, user){
+    console.log(user);
     if(err) console.log(err);
-    else if(user && filterEmail != email) return res.json({isUpdateSuccess: false, errorMessage: "Email is exist!"});
+    else if(user && user.email != email) return res.json({isUpdateSuccess: false, errorMessage: "Email is exist!"});
     else {
       UserProfile.findOneAndUpdate(
-        {filterEmail}, 
+        {email: filterEmail}, 
         {email, name, surname, phoneNumber, education, country, state, hobbies},
         {new: true},
         (err, result)=>{
           if (err) console.log(err);
-          else return res.json({isUpdateSuccess: true, errorMessage: null});
+          else {
+            console.log("pos res:", res);
+            console.log("func res:", result);
+            return res.json({isUpdateSuccess: true, errorMessage: null});
+          }
         }
       )
     }
