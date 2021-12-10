@@ -58,11 +58,22 @@ app.get("/users", (req, res) => {
 
 app.post("/login", function (req, res) {
 
+  const loginStatusData = { isLoginSuccess: null, successMessage: null, errorMessage: null }
   const {email, password} = req.body;
   UserProfile.findOne({email: email, password: password}, function(err, user){
-    if(err) console.log(err);
-    else if(user) return res.json({isLoginSuccess: true, errorMessage: null});
-    else return res.json({isLoginSuccess: false, errorMessage: 'Kullanıcı bilgilerini kontrol ediniz.'});
+    if(err) {
+      loginStatusData.isLoginSuccess = false;
+      loginStatusData.errorMessage = "Something went wrong (Db Error)!";
+    }
+    else if(user) {
+      loginStatusData.isLoginSuccess = true;
+      loginStatusData.successMessage = "Successfully logged in!";
+    }
+    else {
+      loginStatusData.isLoginSuccess = false;
+      loginStatusData.errorMessage = "Please check the e-mail and password!";
+    }
+    return res.json(loginStatusData);
   });
 });
 
