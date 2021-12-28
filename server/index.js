@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
-const corsOptions = { origin:'http://localhost:3000', cretials:true, optionSuccessStatus:200 }
+const corsOptions = { origin:'http://localhost:3000', cretials:true, optionSuccessStatus:200 };
+var bodyParser = require('body-parser');
 
 const mongoose = require('mongoose');
 const UserProfile = require('../Schemas/userProfile.js');
@@ -11,13 +12,76 @@ const PORT = process.env.PORT || 3001;
 
 const app = express();
 
+
+app.use(express.json());
+app.use(cors(corsOptions));
+
+
+var fs = require('fs');
+var path = require('path');
+require('dotenv/config');
+
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
+  
+// Set EJS as templating engine 
+app.set("view engine", "ejs");
+
+
+var multer = require('multer');
+  
+var storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null,path.join(__dirname,'../upload'))
+    },
+    filename: (req, file, cb) => {
+      cb(null,Date.now() + path.extname(file.originalname))
+    }
+});
+  
+var upload = multer({ storage: storage });
+
+var imgModel = require('../Schemas/image.js');
+
 const dbURI = "mongodb+srv://admin:jmnZTIrVMA05hPYj@cluster0.w4wrz.mongodb.net/profile-management?retryWrites=true&w=majority";
 mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
 .then(result => app.listen(PORT, () => console.log(`Server listening on ${PORT}`)))
 .catch((error) => console.log("HATA!:",error));
 
-app.use(express.json());
-app.use(cors(corsOptions));
+
+app.post('/image-upload', upload.single('image'), (req, res, next) => {
+  
+  var obj = {
+      // name: req.body.name,
+      // desc: req.body.desc,
+      name: "aa",
+      desc: "bb",
+      img: {
+          data: fs.readFileSync(path.join(__dirname + '/uploads/' + req.file.filename)),
+          contentType: 'image/png'
+      }
+  }
+  imgModel.create(obj, (err, item) => {
+      if (err) {
+          console.log(err);
+      }
+      else {
+          // item.save();
+          res.redirect('/');
+      }
+  });
+});
+app.get('/image', (req, res) => {
+  imgModel.find({}, (err, items) => {
+      if (err) {
+          console.log(err);
+          res.status(500).send('An error occurred', err);
+      }
+      else {
+          res.render('imagesPage', { items: items });
+      }
+  });
+});
 
 
 // app.get('/add-profile', (req, res) => {
