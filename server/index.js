@@ -51,26 +51,33 @@ mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
 
 app.post('/image-upload', upload.single('image'), (req, res, next) => {
   
+  console.log("dir name: ");
+  console.log(__dirname);
   var obj = {
       // name: req.body.name,
       // desc: req.body.desc,
       name: "aa",
       desc: "bb",
       img: {
-          data: fs.readFileSync(path.join(__dirname + '/uploads/' + req.file.filename)),
+          data: fs.readFileSync(path.join(__dirname, '../upload/' + req.file.filename)),
           contentType: 'image/png'
       }
   }
   imgModel.create(obj, (err, item) => {
       if (err) {
-          console.log(err);
+          console.log("create err:", err);
       }
       else {
-          // item.save();
+          item.save();
+          // item.save((err, result) => {
+          //   if (err) throw err;
+          //   return res.json({isLoginSuccess: true, errorMessage: null});
+          // });
           res.redirect('/');
       }
   });
 });
+
 app.get('/image', (req, res) => {
   imgModel.find({}, (err, items) => {
       if (err) {
@@ -78,7 +85,8 @@ app.get('/image', (req, res) => {
           res.status(500).send('An error occurred', err);
       }
       else {
-          res.render('imagesPage', { items: items });
+          // res.render('imagesPage', { items: items });
+          res.send({ items: items });
       }
   });
 });
