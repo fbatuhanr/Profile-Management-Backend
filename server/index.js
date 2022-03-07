@@ -1,31 +1,28 @@
 const express = require("express");
 const cors = require("cors");
 const corsOptions = { origin:'http://localhost:3000', cretials:true, optionSuccessStatus:200 };
-var bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 
 const mongoose = require('mongoose');
 const UserProfile = require('../Schemas/userProfile.js');
 
-
 const PORT = process.env.PORT || 3001;
 
-
 const app = express();
-
 
 app.use(express.json());
 app.use(cors(corsOptions));
 
 
-var fs = require('fs');
-var path = require('path');
+var fs = require('fs'); // fs is a readfile module.
+var path = require('path'); // path is a directory module that provides file, folder paths, dir paths.
 require('dotenv/config');
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
   
 // Set EJS as templating engine 
-app.set("view engine", "ejs");
+// app.set("view engine", "ejs");
 
 
 var multer = require('multer');
@@ -41,7 +38,7 @@ var storage = multer.diskStorage({
   
 var upload = multer({ storage: storage });
 
-var imgModel = require('../Schemas/image.js');
+var UserProfileImage = require('../Schemas/userProfileImage.js');
 
 const dbURI = "mongodb+srv://admin:jmnZTIrVMA05hPYj@cluster0.w4wrz.mongodb.net/profile-management?retryWrites=true&w=majority";
 mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -51,44 +48,75 @@ mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
 
 app.post('/image-upload', upload.single('image'), (req, res, next) => {
   
-  console.log("dir name: ");
-  console.log(__dirname);
-  var obj = {
-      // name: req.body.name,
-      // desc: req.body.desc,
-      name: "aa",
-      desc: "bb",
+  const imgObj = {
+      filterEmail: req.body.filterEmail,
+      fileName: req.file.filename,
       img: {
           data: fs.readFileSync(path.join(__dirname, '../upload/' + req.file.filename)),
-          contentType: 'image/png'
+          contentType: req.file.mimetype
       }
   }
-  imgModel.create(obj, (err, item) => {
-      if (err) {
-          console.log("create err:", err);
-      }
+
+  UserProfileImage.findOneAndUpdate(
+    {filterEmail: imgObj.filterEmail}, 
+    {fileName: imgObj.fileName, img: imgObj.img},
+    {new: true, upsert: true},
+    (err, result)=>{
+      if (err) console.log(err);
       else {
-          item.save();
-          // item.save((err, result) => {
-          //   if (err) throw err;
-          //   return res.json({isLoginSuccess: true, errorMessage: null});
-          // });
-          res.redirect('/');
+        console.log("pos res:", res);
+        console.log("func res:", result);
+        return res.json({isUpdateSuccess: true, errorMessage: null});
       }
+    }
+  )
+
+  /*
+  UserProfileImage.findOne({filterEmail: imgObj.filterEmail}, function(err, user){
+    console.log(user);
+    if(err) console.log(err);
+    else if(user) {
+      UserProfileImage.findOneAndUpdate(
+        {filterEmail: imgObj.filterEmail}, 
+        {fileName: imgObj.fileName, img: imgObj.img},
+        {new: true},
+        (err, result)=>{
+          if (err) console.log(err);
+          else {
+            console.log("pos res:", res);
+            console.log("func res:", result);
+            return res.json({isUpdateSuccess: true, errorMessage: null});
+          }
+        }
+      )
+    }
+    else {
+      UserProfileImage.create(imgObj, (err, item) => {
+        if (err) 
+          console.log("create err:", err);
+        else {
+            item.save();
+            // item.save((err, result) => {
+            //   if (err) throw err;
+            //   return res.json({isLoginSuccess: true, errorMessage: null});
+            // });
+            res.redirect('/');
+        }
+    });      
+    }
   });
+  */
 });
 
 app.get('/image', (req, res) => {
-  imgModel.find({}, (err, items) => {
-      if (err) {
-          console.log(err);
-          res.status(500).send('An error occurred', err);
-      }
-      else {
-          // res.render('imagesPage', { items: items });
-          res.send({ items: items });
-      }
-  });
+
+  const filterEmail = req.query.filterEmail;
+
+  UserProfileImage.findOne({filterEmail}, (error, doc) => {
+    if(error) console.log("Profile Image findOne error: ", error);
+    else return res.send(doc);
+  })
+
 });
 
 
@@ -121,7 +149,29 @@ app.get("/users", (req, res) => {
 
     UserProfile.find()
     .then(result => {
+
+      result.map(res => {
+        
+
+        console.log(res);
+        UserProfileImage.findOne({filterEmail: res.email}, function(err, user){
+        if(err) console.log(err);
+        else if(user) {
+
+          
+          return Object.assign(res, user);
+
+
+        }
+        else { }
+      });
+
+      })
+
+
+      console.log(result);
       res.send(result);
+
     })
     .catch(err => {
       console.log("Error: ", err);
