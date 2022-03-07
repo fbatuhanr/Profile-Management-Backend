@@ -147,35 +147,34 @@ app.get('/all-profiles', (req, res) => {
 
 app.get("/users", (req, res) => {
 
-    UserProfile.find()
+  let clonedArrayES6 = [];
+
+    UserProfile.find().lean() // lean() provides converting 'MongooseDocument' to plain JS object
     .then(result => {
 
-      result.map(res => {
-        
 
-        console.log(res);
-        UserProfileImage.findOne({filterEmail: res.email}, function(err, user){
-        if(err) console.log(err);
-        else if(user) {
+      let promises = result.map(function(resu){
 
-          
-          return Object.assign(res, user);
-
-
-        }
-        else { }
+        return UserProfileImage.findOne({filterEmail: resu.email})
+        .then(function(resum){
+          if(resum) {
+            resu.img = resum.img;
+            return resu;
+          }
+        });
       });
 
-      })
-
-
-      console.log(result);
-      res.send(result);
+    Promise.all(promises).then(function(results) {
+      console.log(results)
+      res.send(results);
+    });
 
     })
     .catch(err => {
       console.log("Error: ", err);
     })
+
+
 });
 
 app.post("/login", function (req, res) {
