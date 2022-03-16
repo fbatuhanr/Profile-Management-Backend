@@ -147,8 +147,6 @@ app.get('/all-profiles', (req, res) => {
 
 app.get("/users", (req, res) => {
 
-  let clonedArrayES6 = [];
-
     UserProfile.find().lean() // lean() provides converting 'MongooseDocument' to plain JS object
     .then(result => {
 
@@ -157,15 +155,15 @@ app.get("/users", (req, res) => {
 
         return UserProfileImage.findOne({filterEmail: resu.email})
         .then(function(resum){
-          if(resum) {
-            resu.img = resum.img;
+          if(resum) resu.img = resum.img;
+            
             return resu;
-          }
+          
         });
       });
 
     Promise.all(promises).then(function(results) {
-      console.log(results)
+      // console.log(results)
       res.send(results);
     });
 
@@ -238,7 +236,7 @@ app.post("/profile-form", (req,res) => {
   UserProfile.findOne({email: email}, function(err, user){
     console.log(user);
     if(err) console.log(err);
-    else if(user && user.email != email) return res.json({isUpdateSuccess: false, errorMessage: "Email is exist!"});
+    else if(user && user.email != filterEmail) return res.json({isUpdateSuccess: false, errorMessage: "Email is exist!"});
     else {
       UserProfile.findOneAndUpdate(
         {email: filterEmail}, 
@@ -247,9 +245,20 @@ app.post("/profile-form", (req,res) => {
         (err, result)=>{
           if (err) console.log(err);
           else {
-            console.log("pos res:", res);
-            console.log("func res:", result);
-            return res.json({isUpdateSuccess: true, errorMessage: null});
+
+            UserProfileImage.findOneAndUpdate(
+              {filterEmail: filterEmail}, 
+              {filterEmail: email},
+              {new: true},
+              (err, result)=>{
+                if (err) console.log(err);
+                else {
+                  console.log("pos res:", res);
+                  console.log("func res:", result);
+                  return res.json({isUpdateSuccess: true, errorMessage: null});
+                }
+              }
+            )
           }
         }
       )
