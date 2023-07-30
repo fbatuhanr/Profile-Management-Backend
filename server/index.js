@@ -40,7 +40,7 @@ var upload = multer({ storage: storage });
 
 var UserProfileImage = require('../Schemas/userProfileImage.js');
 
-const dbURI = "mongodb+srv://admin:jmnZTIrVMA05hPYj@cluster0.w4wrz.mongodb.net/profile-management?retryWrites=true&w=majority";
+const dbURI = "mongodb+srv://admin:ltepVchnC5x3B57c@cluster0.w4wrz.mongodb.net/profile-management?retryWrites=true&w=majority";
 mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
 .then(result => app.listen(PORT, () => console.log(`Server listening on ${PORT}`)))
 .catch((error) => console.log("HATA!:",error));
