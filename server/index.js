@@ -41,6 +41,7 @@ var upload = multer({ storage: storage });
 var UserProfileImage = require('../Schemas/userProfileImage.js');
 
 const dbURI = "mongodb+srv://admin:ltepVchnC5x3B57c@cluster0.w4wrz.mongodb.net/profile-management?retryWrites=true&w=majority";
+
 mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
 .then(result => app.listen(PORT, () => console.log(`Server listening on ${PORT}`)))
 .catch((error) => console.log("HATA!:",error));
@@ -200,20 +201,37 @@ app.post("/login", function (req, res) {
 
 
 
-app.post("/sign-up", function (req, res) {
+app.post("/sign-up", (req, res) => {
 
-  const {signupEmail, signupPassword} = req.body;
+    const signupStatusData = { isLoginSuccess: null, successMessage: null, errorMessage: null }
+    const {signupEmail, signupPassword} = req.body;
   
-  UserProfile.findOne({email: signupEmail}, function(err, user){
-    if(err) console.log(err);
-    else if(user) return res.json({isLoginSuccess: false, errorMessage: "Email is exist!"});
-    else {
-      const newUser = new UserProfile({email: signupEmail, password: signupPassword});
-      newUser.save((err, result) => {
-        if (err) throw err;
-        return res.json({isLoginSuccess: true, errorMessage: null});
-      });
+  UserProfile.findOne({email: signupEmail}, async function(err, user){
+    if(err) {
+        signupStatusData.isLoginSuccess = false;
+        signupStatusData.errorMessage = "Something went wrong (Db Search Error)!";
     }
+    else if(user) {
+        signupStatusData.isLoginSuccess = false;
+        signupStatusData.successMessage = "Email is exist!";
+    }
+    else {
+        try {
+            const newUser = new UserProfile({email: signupEmail, password: signupPassword});
+            let saveUser = await newUser.save();
+            console.log(saveUser);
+
+            signupStatusData.isLoginSuccess = true;
+            signupStatusData.successMessage = "Successfully signed up!";
+        }
+        catch (err) {
+            console.log(err);
+
+            signupStatusData.isLoginSuccess = false;
+            signupStatusData.errorMessage = "Something went wrong (Db Save Error)!";
+        }
+    }
+      return res.json(signupStatusData);
   });
 });
 
@@ -250,7 +268,7 @@ app.post("/profile-form", (req,res) => {
               {filterEmail: filterEmail}, 
               {filterEmail: email},
               {new: true},
-              (err, result)=>{
+              (err, result) => {
                 if (err) console.log(err);
                 else {
                   console.log("pos res:", res);
